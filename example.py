@@ -6,8 +6,21 @@ This script demonstrates how to use the noise field generator to create
 beautiful flow field visualizations suitable for pen plotting.
 """
 
-import argparse
 import sys
+
+# Check Python version before importing anything else
+if sys.version_info[0] < 3:
+    print("Error: This script requires Python 3.7 or higher.")
+    print("You are running Python {}.{}.{}".format(
+        sys.version_info[0], sys.version_info[1], sys.version_info[2]))
+    print("\nPlease run with Python 3:")
+    print("  python3 example.py --all")
+    print("or make the script executable and run it directly:")
+    print("  chmod +x example.py")
+    print("  ./example.py --all")
+    sys.exit(1)
+
+import argparse
 from noise_field import NoiseFieldGenerator
 from svg_export import SVGExporter
 from axidraw_plotter import AxiDrawPlotter, plot_svg_file
