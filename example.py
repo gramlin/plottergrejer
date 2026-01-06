@@ -9,11 +9,11 @@ beautiful flow field visualizations suitable for pen plotting.
 import sys
 
 # Check Python version before importing anything else
-if sys.version_info[0] < 3:
+if sys.version_info < (3, 7):
     print("Error: This script requires Python 3.7 or higher.")
     print("You are running Python {}.{}.{}".format(
         sys.version_info[0], sys.version_info[1], sys.version_info[2]))
-    print("\nPlease run with Python 3:")
+    print("\nPlease run with Python 3.7+:")
     print("  python3 example.py --all")
     print("or make the script executable and run it directly:")
     print("  chmod +x example.py")
