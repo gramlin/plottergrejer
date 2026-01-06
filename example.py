@@ -23,6 +23,10 @@ if sys.version_info[:2] < (3, 7):
 
 import argparse
 import math
+import random
+import shutil
+import subprocess
+import tempfile
 from noise_field import NoiseFieldGenerator
 from svg_export import SVGExporter
 from axidraw_plotter import AxiDrawPlotter, plot_svg_file
@@ -185,8 +189,9 @@ def example_scale_armor(output_file: str = "scale_armor.svg"):
     
     panel_size = (width - (2 * margin) - (panel_gap * (panels - 1))) / panels
     tile_step = panel_size / tiles_per_panel
-    base_tile_size = tile_step * 0.7
+    base_tile_size = tile_step * 1.05
     border_width = tile_step * 1.6
+    stack_offset = tile_step * 0.35
     
     generator = NoiseFieldGenerator(
         width=width,
@@ -196,8 +201,9 @@ def example_scale_armor(output_file: str = "scale_armor.svg"):
         octaves=2,
         seed=2024
     )
+    rng = random.Random(2024)
     
-    lines = []
+    lines_with_depth = []
     
     for panel_y in range(panels):
         for panel_x in range(panels):
@@ -215,7 +221,7 @@ def example_scale_armor(output_file: str = "scale_armor.svg"):
                         center_y - tile_step * 0.9
                     )
                     scale_noise = (math.sin(scale_angle * 1.4) + 1) / 2
-                    size = base_tile_size * (0.6 + 0.8 * scale_noise)
+                    size = base_tile_size * (0.85 + 0.9 * scale_noise)
                     
                     local_x = (col + 0.5) * tile_step
                     local_y = (row + 0.5) * tile_step
@@ -228,8 +234,19 @@ def example_scale_armor(output_file: str = "scale_armor.svg"):
                     border_factor = max(0.0, 1.0 - (edge_dist / border_width))
                     size *= 1.0 + border_factor * 0.85
                     angle += border_factor * 0.75
+
+                    depth_noise = math.sin(angle * 0.9 + scale_angle * 1.3)
+                    depth = (depth_noise + 1.0) / 2.0
+                    depth += rng.uniform(-0.08, 0.08)
+                    depth = max(0.0, min(1.0, depth))
+                    offset = depth * stack_offset
+                    stacked_x = center_x + offset
+                    stacked_y = center_y - offset
                     
-                    lines.append(_square_path(center_x, center_y, size, angle))
+                    lines_with_depth.append((
+                        depth,
+                        _square_path(stacked_x, stacked_y, size, angle)
+                    ))
     
     exporter = SVGExporter(
         width=width,
@@ -237,7 +254,28 @@ def example_scale_armor(output_file: str = "scale_armor.svg"):
         stroke_width=1.2,
         stroke_color='black'
     )
-    exporter.export_lines(lines, output_file, add_border=False)
+    lines_with_depth.sort(key=lambda item: item[0])
+    lines = [line for _, line in lines_with_depth]
+    vpype_path = shutil.which("vpype")
+    if vpype_path:
+        with tempfile.NamedTemporaryFile(suffix=".svg", delete=False) as temp_svg:
+            temp_path = temp_svg.name
+        exporter.export_lines(lines, temp_path, add_border=False)
+        result = subprocess.run(
+            [vpype_path, "read", temp_path, "occult", "write", output_file],
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        if result.returncode != 0:
+            print("Warning: vpype occult failed, keeping raw SVG output.")
+            print(result.stderr.strip())
+            os.replace(temp_path, output_file)
+        else:
+            os.remove(temp_path)
+    else:
+        print("Warning: vpype not found, exporting without occult.")
+        exporter.export_lines(lines, output_file, add_border=False)
     
     print(f"✓ Saved to {output_file}")
     print(f"  Generated {len(lines)} tiles across {panels}x{panels} panels")
