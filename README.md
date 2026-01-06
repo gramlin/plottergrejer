@@ -39,15 +39,15 @@ pip install https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip
 
 ```bash
 # Generate all example patterns
-python example.py --all
+python main.py --all
 
 # Generate specific patterns
-python example.py --flow-lines
-python example.py --grid-field
-python example.py --organic
+python main.py --flow-lines
+python main.py --grid-field
+python main.py --organic
 
 # Generate custom pattern
-python example.py --custom --output my_art.svg --num-lines 1000
+python main.py --custom --output my_art.svg --num-lines 1000
 ```
 
 ### Using as a Library
@@ -81,10 +81,10 @@ exporter.export_lines(lines, "output.svg", add_border=True)
 
 ```bash
 # Generate and plot in one command
-python example.py --flow-lines --plot
+python main.py --flow-lines --plot
 
 # Plot an existing SVG file
-python example.py --plot my_art.svg
+python main.py --plot my_art.svg
 ```
 
 Or use the library directly:
