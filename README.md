@@ -5,6 +5,7 @@ A Python tool for generating beautiful noise field visualizations optimized for 
 ## Features
 
 - **Noise Field Generation**: Creates flow fields based on Perlin noise patterns
+- **Tile Patterns**: Generate rotated and scaled tile patterns with "scale armor" effects
 - **SVG Export**: Outputs vector graphics optimized for pen plotting
 - **AxiDraw Integration**: Direct integration with AxiDraw pen plotters
 - **Customizable**: Extensive parameters for creating unique patterns
@@ -35,7 +36,22 @@ pip install https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip
 
 ## Quick Start
 
-### Generate Example Patterns
+### Generate Tile Patterns
+
+```bash
+# Generate all tile pattern examples
+python noise_tiles.py --all
+
+# Generate specific patterns
+python noise_tiles.py --scale-armor
+python noise_tiles.py --simple
+python noise_tiles.py --dense
+
+# Custom output filename
+python noise_tiles.py --scale-armor --output my_tiles.svg
+```
+
+### Generate Flow Field Patterns
 
 ```bash
 # Generate all example patterns
@@ -103,6 +119,7 @@ plot_svg_file("output.svg", pen_down_speed=25, pen_up_speed=75)
 Main class for generating noise-based flow fields.
 
 **Parameters:**
+
 - `width` (int): Canvas width in pixels (default: 800)
 - `height` (int): Canvas height in pixels (default: 800)
 - `resolution` (int): Grid spacing - smaller values = more detail (default: 20)
@@ -113,6 +130,7 @@ Main class for generating noise-based flow fields.
 - `seed` (int): Random seed for reproducibility (default: random)
 
 **Methods:**
+
 - `generate_flow_lines(num_lines, line_length, step_size)`: Generate continuous flow lines
 - `generate_grid_lines(line_length)`: Generate directional indicators at grid points
 - `get_angle_at(x, y)`: Get flow direction at specific coordinates
@@ -122,6 +140,7 @@ Main class for generating noise-based flow fields.
 Handles SVG export for pen plotting.
 
 **Parameters:**
+
 - `width` (int): Canvas width (default: 800)
 - `height` (int): Canvas height (default: 800)
 - `stroke_width` (float): Line thickness (default: 0.5)
@@ -129,6 +148,7 @@ Handles SVG export for pen plotting.
 - `background_color` (str): Background color or None (default: 'white')
 
 **Methods:**
+
 - `export_lines(lines, filename, add_border)`: Export lines to SVG
 - `export_circles(circles, filename, filled)`: Export circles to SVG
 - `export_mixed(filename, lines, circles, add_border)`: Export mixed content
@@ -138,6 +158,7 @@ Handles SVG export for pen plotting.
 Interface for AxiDraw pen plotters.
 
 **Methods:**
+
 - `connect()`: Connect to plotter
 - `plot_svg(svg_file, pen_down_speed, pen_up_speed, ...)`: Plot an SVG file
 - `preview_svg(svg_file)`: Preview without plotting
@@ -145,26 +166,33 @@ Interface for AxiDraw pen plotters.
 - `is_available()`: Check if AxiDraw library is installed
 
 **Convenience Function:**
+
 - `plot_svg_file(svg_file, pen_down_speed, pen_up_speed)`: Quick plotting
 
 ## Examples
 
 ### Flow Lines Pattern
+
 Creates continuous lines that follow the noise field:
+
 ```python
 generator = NoiseFieldGenerator(width=800, height=800, noise_scale=0.005)
 lines = generator.generate_flow_lines(num_lines=500, line_length=150)
 ```
 
 ### Grid Field Pattern
+
 Shows the direction of flow at each grid point:
+
 ```python
 generator = NoiseFieldGenerator(resolution=30, noise_scale=0.008)
 lines = generator.generate_grid_lines(line_length=25)
 ```
 
 ### Organic Pattern
+
 Dense, organic-looking patterns with multiple octaves:
+
 ```python
 generator = NoiseFieldGenerator(
     noise_scale=0.003,
@@ -177,30 +205,37 @@ lines = generator.generate_flow_lines(num_lines=1500, line_length=80)
 ## Customization Tips
 
 ### Smooth vs. Chaotic
+
 - **Smooth**: Lower `noise_scale` (0.001-0.005), fewer `octaves` (1-2)
 - **Chaotic**: Higher `noise_scale` (0.01-0.02), more `octaves` (3-5)
 
 ### Dense vs. Sparse
+
 - **Dense**: More `num_lines` (1000+), shorter `line_length` (50-100)
 - **Sparse**: Fewer `num_lines` (100-300), longer `line_length` (150-300)
 
 ### Resolution
+
 - Lower `resolution` (10-15): More detail, slower generation
 - Higher `resolution` (30-50): Less detail, faster generation
 
 ## Troubleshooting
 
 ### AxiDraw Not Found
+
 If you get "AxiDraw library not available":
+
 1. Install the AxiDraw software from Evil Mad Scientist
 2. Install the Python API: Follow instructions at https://axidraw.com/doc/py_api/
 
 ### SVG Looks Wrong
+
 - Ensure your canvas dimensions match your paper size
 - Check that `stroke_width` is appropriate for your pen
 - Try adding a border with `add_border=True`
 
 ### Slow Generation
+
 - Increase `resolution` (less dense grid)
 - Reduce `num_lines` or `line_length`
 - Reduce `octaves` for simpler noise

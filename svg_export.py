@@ -220,3 +220,61 @@ class SVGExporter:
                 ))
         
         dwg.save()
+    
+    def export_polygons(
+        self,
+        polygons: List[List[Tuple[float, float]]],
+        filename: str,
+        add_border: bool = False
+    ) -> None:
+        """
+        Export polygons (like squares, triangles, etc.) to an SVG file.
+        
+        Args:
+            polygons: List of polygons, where each polygon is a list of (x, y) points
+            filename: Output filename
+            add_border: Whether to add a border around the canvas
+        """
+        dwg = svgwrite.Drawing(
+            filename,
+            size=(f'{self.width}px', f'{self.height}px'),
+            viewBox=f'0 0 {self.width} {self.height}'
+        )
+        
+        # Add background if specified
+        if self.background_color:
+            dwg.add(dwg.rect(
+                insert=(0, 0),
+                size=(self.width, self.height),
+                fill=self.background_color
+            ))
+        
+        # Add border if requested
+        if add_border:
+            dwg.add(dwg.rect(
+                insert=(0, 0),
+                size=(self.width, self.height),
+                fill='none',
+                stroke=self.stroke_color,
+                stroke_width=self.stroke_width * 2
+            ))
+        
+        # Add all polygons
+        for polygon in polygons:
+            if len(polygon) < 2:
+                continue
+            
+            path_data = self._create_line_path(polygon)
+            if not path_data:
+                continue
+            
+            dwg.add(dwg.path(
+                d=path_data,
+                stroke=self.stroke_color,
+                stroke_width=self.stroke_width,
+                fill='none',
+                stroke_linecap='round',
+                stroke_linejoin='miter'
+            ))
+        
+        dwg.save()
