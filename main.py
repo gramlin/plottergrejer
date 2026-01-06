@@ -22,38 +22,10 @@ if sys.version_info[:2] < (3, 7):
     sys.exit(1)
 
 import argparse
-import math
-import random
-import shutil
-import subprocess
-import tempfile
 from noise_field import NoiseFieldGenerator
 from svg_export import SVGExporter
-from axidraw_plotter import AxiDrawPlotter, plot_svg_file
-
-
-def _square_path(
-    center_x: float,
-    center_y: float,
-    size: float,
-    angle: float
-):
-    half = size / 2.0
-    corners = [
-        (-half, -half),
-        (half, -half),
-        (half, half),
-        (-half, half),
-        (-half, -half)
-    ]
-    cos_a = math.cos(angle)
-    sin_a = math.sin(angle)
-    points = []
-    for x, y in corners:
-        rot_x = x * cos_a - y * sin_a
-        rot_y = x * sin_a + y * cos_a
-        points.append((center_x + rot_x, center_y + rot_y))
-    return points
+from axidraw_plotter import AxiDrawPlotter
+from scale_armor_harmonic import example_scale_armor_harmonic
 
 
 def example_flow_lines(output_file: str = "flow_lines.svg"):
@@ -171,114 +143,6 @@ def example_organic_pattern(output_file: str = "organic_pattern.svg"):
     print(f"  Generated {len(lines)} flow lines with organic feel")
 
 
-def example_scale_armor(output_file: str = "scale_armor.svg"):
-    """
-    Generate a tiled scale armor pattern inspired by a multi-panel noise field.
-    
-    Args:
-        output_file: Output SVG filename
-    """
-    print("Generating scale armor tile pattern...")
-    
-    width = 900
-    height = 900
-    panels = 3
-    tiles_per_panel = 10
-    panel_gap = 40
-    margin = 40
-    
-    panel_size = (width - (2 * margin) - (panel_gap * (panels - 1))) / panels
-    tile_step = panel_size / tiles_per_panel
-    base_tile_size = tile_step * 1.05
-    border_width = tile_step * 1.6
-    stack_offset = tile_step * 0.35
-    
-    generator = NoiseFieldGenerator(
-        width=width,
-        height=height,
-        resolution=20,
-        noise_scale=0.01,
-        octaves=2,
-        seed=2024
-    )
-    rng = random.Random(2024)
-    
-    lines_with_depth = []
-    
-    for panel_y in range(panels):
-        for panel_x in range(panels):
-            origin_x = margin + panel_x * (panel_size + panel_gap)
-            origin_y = margin + panel_y * (panel_size + panel_gap)
-            
-            for row in range(tiles_per_panel):
-                for col in range(tiles_per_panel):
-                    center_x = origin_x + (col + 0.5) * tile_step
-                    center_y = origin_y + (row + 0.5) * tile_step
-                    
-                    angle = generator.get_angle_at(center_x, center_y)
-                    scale_angle = generator.get_angle_at(
-                        center_x + tile_step * 1.3,
-                        center_y - tile_step * 0.9
-                    )
-                    scale_noise = (math.sin(scale_angle * 1.4) + 1) / 2
-                    size = base_tile_size * (0.85 + 0.9 * scale_noise)
-                    
-                    local_x = (col + 0.5) * tile_step
-                    local_y = (row + 0.5) * tile_step
-                    edge_dist = min(
-                        local_x,
-                        local_y,
-                        panel_size - local_x,
-                        panel_size - local_y
-                    )
-                    border_factor = max(0.0, 1.0 - (edge_dist / border_width))
-                    size *= 1.0 + border_factor * 0.85
-                    angle += border_factor * 0.75
-
-                    depth_noise = math.sin(angle * 0.9 + scale_angle * 1.3)
-                    depth = (depth_noise + 1.0) / 2.0
-                    depth += rng.uniform(-0.08, 0.08)
-                    depth = max(0.0, min(1.0, depth))
-                    offset = depth * stack_offset
-                    stacked_x = center_x + offset
-                    stacked_y = center_y - offset
-                    
-                    lines_with_depth.append((
-                        depth,
-                        _square_path(stacked_x, stacked_y, size, angle)
-                    ))
-    
-    exporter = SVGExporter(
-        width=width,
-        height=height,
-        stroke_width=1.2,
-        stroke_color='black'
-    )
-    lines_with_depth.sort(key=lambda item: item[0])
-    lines = [line for _, line in lines_with_depth]
-    vpype_path = shutil.which("vpype")
-    if vpype_path:
-        with tempfile.NamedTemporaryFile(suffix=".svg", delete=False) as temp_svg:
-            temp_path = temp_svg.name
-        exporter.export_lines(lines, temp_path, add_border=False)
-        result = subprocess.run(
-            [vpype_path, "read", temp_path, "occult", "write", output_file],
-            capture_output=True,
-            text=True,
-            check=False
-        )
-        if result.returncode != 0:
-            print("Warning: vpype occult failed, keeping raw SVG output.")
-            print(result.stderr.strip())
-            os.replace(temp_path, output_file)
-        else:
-            os.remove(temp_path)
-    else:
-        print("Warning: vpype not found, exporting without occult.")
-        exporter.export_lines(lines, output_file, add_border=False)
-    
-    print(f"✓ Saved to {output_file}")
-    print(f"  Generated {len(lines)} tiles across {panels}x{panels} panels")
 
 
 def example_custom(
@@ -381,20 +245,20 @@ def main():
         epilog="""
 Examples:
   # Generate all example patterns
-  python example.py --all
+  python main.py --all
   
   # Generate a specific pattern
-  python example.py --flow-lines
-  python example.py --grid-field
-  python example.py --organic
-  python example.py --scale-armor
+  python main.py --flow-lines
+  python main.py --grid-field
+  python main.py --organic
+  python main.py --scale-armor
   
   # Generate custom pattern
-  python example.py --custom --output my_art.svg --width 1000 --height 1000
+  python main.py --custom --output my_art.svg --width 1000 --height 1000
   
   # Plot to AxiDraw
-  python example.py --flow-lines --plot
-  python example.py --plot flow_lines.svg
+  python main.py --flow-lines --plot
+  python main.py --plot flow_lines.svg
         """
     )
     
@@ -453,7 +317,7 @@ Examples:
         example_flow_lines()
         example_grid_field()
         example_organic_pattern()
-        example_scale_armor()
+        example_scale_armor_harmonic()
         generated_file = "flow_lines.svg"
     elif args.flow_lines:
         example_flow_lines(args.output)
@@ -465,7 +329,7 @@ Examples:
         example_organic_pattern(args.output)
         generated_file = args.output
     elif args.scale_armor:
-        example_scale_armor(args.output)
+        example_scale_armor_harmonic(args.output)
         generated_file = args.output
     elif args.custom:
         example_custom(
