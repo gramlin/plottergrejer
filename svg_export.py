@@ -40,6 +40,27 @@ class SVGExporter:
         self.stroke_color = stroke_color
         self.background_color = background_color
     
+    def _create_line_path(self, line: List[Tuple[float, float]]) -> str:
+        """
+        Create an SVG path string from a line.
+        
+        Args:
+            line: List of (x, y) points
+            
+        Returns:
+            SVG path data string
+        """
+        if len(line) < 2:
+            return ""
+        
+        path_data = []
+        path_data.append(f'M {line[0][0]:.2f},{line[0][1]:.2f}')
+        
+        for point in line[1:]:
+            path_data.append(f'L {point[0]:.2f},{point[1]:.2f}')
+        
+        return ' '.join(path_data)
+    
     def export_lines(
         self,
         lines: List[List[Tuple[float, float]]],
@@ -81,18 +102,12 @@ class SVGExporter:
         
         # Add all lines
         for line in lines:
-            if len(line) < 2:
+            path_data = self._create_line_path(line)
+            if not path_data:
                 continue
             
-            # Convert points to SVG path
-            path_data = []
-            path_data.append(f'M {line[0][0]:.2f},{line[0][1]:.2f}')
-            
-            for point in line[1:]:
-                path_data.append(f'L {point[0]:.2f},{point[1]:.2f}')
-            
             dwg.add(dwg.path(
-                d=' '.join(path_data),
+                d=path_data,
                 stroke=self.stroke_color,
                 stroke_width=self.stroke_width,
                 fill='none',
@@ -181,17 +196,12 @@ class SVGExporter:
         
         if lines:
             for line in lines:
-                if len(line) < 2:
+                path_data = self._create_line_path(line)
+                if not path_data:
                     continue
                 
-                path_data = []
-                path_data.append(f'M {line[0][0]:.2f},{line[0][1]:.2f}')
-                
-                for point in line[1:]:
-                    path_data.append(f'L {point[0]:.2f},{point[1]:.2f}')
-                
                 dwg.add(dwg.path(
-                    d=' '.join(path_data),
+                    d=path_data,
                     stroke=self.stroke_color,
                     stroke_width=self.stroke_width,
                     fill='none',

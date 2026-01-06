@@ -3,8 +3,9 @@ noise>=1.2.2
 numpy>=1.21.0
 svgwrite>=1.4.3
 
-# AxiDraw plotter integration
-https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip
-
 # Optional dependencies for enhanced functionality
 Pillow>=9.0.0
+
+# AxiDraw plotter integration (optional)
+# Install separately from: https://axidraw.com/doc/py_api/#installation
+# Or use: pip install https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip
